@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Settings Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1e1e1e;
+            color: #cccccc;
+            font-family: Verdana, Geneva, sans-serif;
+            padding: 40px;
+        }
+
+        .settings-container {
+            max-width: 400px;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: #cccccc;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-button {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #cccccc;
+            padding: 10px 40px 10px 15px;
+            font-size: 15px;
+            text-align: left;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .dropdown-button:hover {
+            background: #333333;
+        }
+
+        .dropdown-button::after {
+            content: '▼';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #888888;
+        }
+
+        .dropdown-button.open::after {
+            content: '▲';
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-top: none;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: #cccccc;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-option:hover {
+            background: #3a3a3a;
+        }
+
+        .dropdown-option.selected {
+            background: #4a4a2a;
+            color: #9FCA2B;
+        }
+
+        /* Custom scrollbar */
+        .dropdown-menu::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 4px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: #5a5a5a;
+        }
+
+        .demo-note {
+            margin-top: 40px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-left: 3px solid #9FCA2B;
+            font-size: 13px;
+            color: #888888;
+        }
+
+        .demo-note strong {
+            color: #9FCA2B;
+        }
+
+        .preview-container {
+            margin-top: 40px;
+            padding: 40px;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-title {
+            font-size: 14px;
+            color: #888888;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .item-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .animated-square {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #7a9e1f, #9FCA2B);
+            border: 2px solid #9FCA2B;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.5);
+            }
+            50% {
+                transform: scale(1.5);
+            }
+        }
+
+        .distance-indicator {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFFFFFC8;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <div class="setting-group">
+            <label class="setting-label">Measurement unit</label>
+            <div class="dropdown" id="unitDropdown">
+                <button class="dropdown-button" id="unitButton">Feet</button>
+                <div class="dropdown-menu" id="unitMenu">
+                    <div class="dropdown-option selected" data-value="FEET">Feet</div>
+                    <div class="dropdown-option" data-value="METERS">Meters</div>
+                    <div class="dropdown-option" data-value="HAMMER">Hammer units</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">Measurement precision</label>
+            <div class="dropdown" id="precisionDropdown">
+                <button class="dropdown-button" id="precisionButton">5</button>
+                <div class="dropdown-menu" id="precisionMenu"></div>
+            </div>
+        </div>
+
+        <div class="demo-note">
+            <strong>Demo info:</strong> Click dropdowns to expand them. When you change the measurement unit, the precision automatically converts to the nearest equivalent value.
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-title">Live Preview</div>
+            <div class="item-container">
+                <div class="animated-square"></div>
+                <div class="distance-indicator" id="distanceDisplay">60 FT</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FEET_TO_HU = 12.0;
+        const HU_TO_METERS = 0.0254;
+
+        const precisionOptions = {
+            FEET: [0.01, 0.1, 1, 5, 10, 25],
+            METERS: [0.01, 0.1, 1, 5, 10],
+            HAMMER: [0.01, 0.1, 1, 5, 10, 50, 100, 250]
+        };
+
+        let currentUnit = 'FEET';
+        let currentPrecision = 5;
+
+        function convertPrecision(precision, fromUnit, toUnit) {
+            if (fromUnit === toUnit) return precision;
+
+            // Convert to hammer units first
+            let precisionInHU;
+            if (fromUnit === 'FEET') {
+                precisionInHU = precision * FEET_TO_HU;
+            } else if (fromUnit === 'METERS') {
+                precisionInHU = precision / HU_TO_METERS;
+            } else {
+                precisionInHU = precision;
+            }
+
+            // Convert from hammer units to target
+            let convertedPrecision;
+            if (toUnit === 'FEET') {
+                convertedPrecision = precisionInHU / FEET_TO_HU;
+            } else if (toUnit === 'METERS') {
+                convertedPrecision = precisionInHU * HU_TO_METERS;
+            } else {
+                convertedPrecision = precisionInHU;
+            }
+
+            // Find nearest available precision option
+            return findNearestOption(convertedPrecision, precisionOptions[toUnit]);
+        }
+
+        function findNearestOption(value, options) {
+            return options.reduce((prev, curr) => {
+                return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev;
+            });
+        }
+
+        function updatePrecisionMenu(unit, selectedValue) {
+            const menu = document.getElementById('precisionMenu');
+            menu.innerHTML = '';
+
+            precisionOptions[unit].forEach(option => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-option';
+                div.dataset.value = option;
+                div.textContent = option;
+                if (option === selectedValue) {
+                    div.classList.add('selected');
+                }
+                div.addEventListener('click', () => selectPrecision(option));
+                menu.appendChild(div);
+            });
+        }
+
+        function selectUnit(unit, unitName) {
+            const oldUnit = currentUnit;
+            currentUnit = unit;
+
+            // Update unit button
+            document.getElementById('unitButton').textContent = unitName;
+
+            // Update unit menu selection
+            document.querySelectorAll('#unitMenu .dropdown-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.value === unit) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            // Convert precision
+            const newPrecision = convertPrecision(currentPrecision, oldUnit, unit);
+            currentPrecision = newPrecision;
+
+            // Update precision display and menu
+            document.getElementById('precisionButton').textContent = newPrecision;
+            updatePrecisionMenu(unit, newPrecision);
+
+            closeDropdown('unitDropdown');
+        }
+
+        function selectPrecision(precision) {
+            currentPrecision = precision;
+            document.getElementById('precisionButton').textContent = precision;
+
+            // Update menu selection
+            document.querySelectorAll('#precisionMenu .dropdown-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (parseFloat(opt.dataset.value) === precision) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            closeDropdown('precisionDropdown');
+        }
+
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const button = dropdown.querySelector('.dropdown-button');
+            const menu = dropdown.querySelector('.dropdown-menu');
+
+            const isOpen = menu.classList.contains('show');
+
+            // Close all dropdowns
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            document.querySelectorAll('.dropdown-button').forEach(b => b.classList.remove('open'));
+
+            // Toggle this one
+            if (!isOpen) {
+                menu.classList.add('show');
+                button.classList.add('open');
+            }
+        }
+
+        function closeDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const button = dropdown.querySelector('.dropdown-button');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            menu.classList.remove('show');
+            button.classList.remove('open');
+        }
+
+        // Setup event listeners
+        document.getElementById('unitButton').addEventListener('click', () => toggleDropdown('unitDropdown'));
+        document.getElementById('precisionButton').addEventListener('click', () => toggleDropdown('precisionDropdown'));
+
+        // Unit options
+        document.querySelectorAll('#unitMenu .dropdown-option').forEach(option => {
+            option.addEventListener('click', () => {
+                selectUnit(option.dataset.value, option.textContent);
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                document.querySelectorAll('.dropdown-button').forEach(b => b.classList.remove('open'));
+            }
+        });
+
+        // Initialize precision menu
+        updatePrecisionMenu(currentUnit, currentPrecision);
+
+        // Distance calculation and display
+        function roundToNearest(value, precision) {
+            return Math.round(value / precision) * precision;
+        }
+
+        function formatDistance(hammerUnits) {
+            let distance;
+            let suffix;
+
+            switch(currentUnit) {
+                case 'FEET':
+                    distance = hammerUnits / FEET_TO_HU;
+                    suffix = 'FT';
+                    break;
+                case 'METERS':
+                    distance = hammerUnits * HU_TO_METERS;
+                    suffix = 'm';
+                    break;
+                case 'HAMMER':
+                    distance = hammerUnits;
+                    suffix = 'HU';
+                    break;
+            }
+
+            distance = roundToNearest(distance, currentPrecision);
+
+            // Format the number
+            let formatted;
+            if (currentPrecision < 1) {
+                // Show decimal places for precision < 1
+                const decimals = currentPrecision >= 0.1 ? 1 : 2;
+                formatted = distance.toFixed(decimals);
+            } else {
+                formatted = distance.toFixed(0);
+            }
+
+            return `${formatted} ${suffix}`;
+        }
+
+        function updateDistanceDisplay() {
+            // Get current animation progress (0 to 1)
+            const square = document.querySelector('.animated-square');
+            const rect = square.getBoundingClientRect();
+            const currentScale = rect.width / 60; // 60 is base size
+            
+            // Map scale to distance (smaller = farther, larger = closer)
+            // Scale ranges from 0.5 to 1.5, map to distance range
+            // Let's say 0.5 scale = 120 feet, 1.5 scale = 40 feet in hammer units
+            const minDistance = 40 * FEET_TO_HU; // Close distance (480 HU)
+            const maxDistance = 120 * FEET_TO_HU; // Far distance (1440 HU)
+            
+            // Invert: smaller scale = larger distance
+            const normalizedScale = (currentScale - 0.5) / (1.5 - 0.5); // 0 to 1
+            const hammerUnits = maxDistance - (normalizedScale * (maxDistance - minDistance));
+            
+            document.getElementById('distanceDisplay').textContent = formatDistance(hammerUnits);
+            
+            requestAnimationFrame(updateDistanceDisplay);
+        }
+
+        // Start the distance display loop
+        updateDistanceDisplay();
+    </script>
+</body>
+</html>
